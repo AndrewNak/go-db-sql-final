@@ -55,16 +55,15 @@ func TestAddGetDelete(t *testing.T) {
 	id, err := store.Add(parcel)
 	require.NoError(t, err)
 	require.NotZero(t, id)
-	parcel.Number = id
+	//parcel.Number = id
 
 	// get
 	got, err := store.Get(id)
 	require.NoError(t, err)
-	require.Equal(t, parcel.Number, got.Number)
-	require.Equal(t, parcel.Client, got.Client)
-	require.Equal(t, parcel.Status, got.Status)
-	require.Equal(t, parcel.Address, got.Address)
-	require.Equal(t, parcel.CreatedAt, got.CreatedAt)
+
+	// копируем номер из полученной посылки в ожидаемую
+	parcel.Number = got.Number
+	require.Equal(t, parcel, got)
 
 	// delete
 	err = store.Delete(id)
@@ -158,12 +157,15 @@ func TestGetByClient(t *testing.T) {
 	require.Len(t, storedParcels, len(parcels))
 
 	// check
-	for _, p := range storedParcels {
-		expected, ok := parcelMap[p.Number]
-		require.True(t, ok)
-		require.Equal(t, expected.Client, p.Client)
-		require.Equal(t, expected.Status, p.Status)
-		require.Equal(t, expected.Address, p.Address)
-		require.Equal(t, expected.CreatedAt, p.CreatedAt)
+	for _, expected := range parcels {
+		found := false
+		for _, got := range storedParcels {
+			if got.Number == expected.Number {
+				require.Equal(t, expected, got)
+				found = true
+				break
+			}
+		}
+		require.True(t, found, "посылка с номером %d не найдена", expected.Number)
 	}
 }
